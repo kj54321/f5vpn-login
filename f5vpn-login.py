@@ -24,6 +24,8 @@ CONFIG_FILE = "~/.f5vpn-login.conf"
 
 KEEPALIVE_TIMEOUT = 60 * 10
 
+BUF_SIZE = 8192
+
 proxy_addr = None
 
 
@@ -742,7 +744,7 @@ def run_event_loop(pppd_fd, ssl_socket, ssl, logpipe_r, ppp_ip_up):
 
         # Read data from log pipe
         try:
-            logmsg = os.read(logpipe_r, 10000).decode('utf-8')
+            logmsg = os.read(logpipe_r, BUF_SIZE).decode('utf-8')
             if not logmsg:  # EOF
                 print("EOF on logpipe_r")
                 break
@@ -754,7 +756,7 @@ def run_event_loop(pppd_fd, ssl_socket, ssl, logpipe_r, ppp_ip_up):
         # Read data from pppd
         if not data_to_ssl:
             try:
-                data_to_ssl = os.read(pppd_fd, 10000)
+                data_to_ssl = os.read(pppd_fd, BUF_SIZE)
                 if not data_to_ssl:  # EOF
                     print("EOF on pppd")
                     break
@@ -767,7 +769,7 @@ def run_event_loop(pppd_fd, ssl_socket, ssl, logpipe_r, ppp_ip_up):
         if not data_to_pppd:
             try:
                 ssl_read_blocked_on_write = False
-                data_to_pppd = ssl_socket.read(1)
+                data_to_pppd = ssl_socket.read(BUF_SIZE)
                 if not data_to_pppd:  # EOF
                     print("EOF on ssl")
                     break
