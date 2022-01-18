@@ -409,7 +409,7 @@ def send_request(host, request):
         except (socket.error, ssl.SSLError):
             break
     # print data
-    return data
+    return data.decode('utf-8')
 
 
 def get_vpn_client_data(host):
@@ -501,7 +501,7 @@ User-Agent: Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en) AppleWebKit/417.9 (KHTM
 Host: %(host)s\r
 \r
 """ % dict(host=host, session=session)
-    result = send_request(host, request).decode('utf-8')
+    result = send_request(host, request)
 
     if re.search('HTTP/[0-9.]+ 302( Found)?', result):
         # a redirect to the login page.
@@ -560,7 +560,7 @@ User-Agent: Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en) AppleWebKit/417.9 (KHTM
 Host: %(host)s\r
 \r
 """ % dict(menu_number=menu_number, session=session, host=host)
-    result = send_request(host, request).decode('utf-8')
+    result = send_request(host, request)
     # print "RESULT:", result
 
     # Try to find the plugin parameters
