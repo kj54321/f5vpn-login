@@ -318,23 +318,38 @@ class ResolvConfHelperDNSMixin:
             pass
 
 
-class LinuxManualPlatform(ManualFrobbingDNSMixin, LinuxPlatform):
-    pass
+class SystemdResolvedDNSMixin:
+    def setup_dns(self, iface_name, service_id, dns_servers, dns_domains, revdns_domains, override_gateway):
+        self.iface_name = iface_name
+        run_as_root(['/usr/bin/resolvectl', 'domain', iface_name, *dns_domains])
+        run_as_root(['/usr/bin/resolvectl', 'default-route', iface_name, 'false'])
+        run_as_root(['/usr/bin/resolvectl', 'dns', iface_name, *dns_servers])
 
+    def teardown_dns(self):
+        as_root(self._teardown_dns)
 
-class LinuxResolvconfPlatform(ResolvConfHelperDNSMixin, LinuxPlatform):
-    pass
+    def _teardown_dns(self):
+        try:
+            run_as_root(['/usr/bin/resolvectl', 'domain', self.iface_name])
+            run_as_root(['/usr/bin/resolvectl', 'dns', self.iface_name])
+        except:
+            pass
 
 
 def get_platform():
     if sys.platform == "darwin":
         return DarwinPlatform()
     elif sys.platform == "linux":
+        platform = LinuxPlatform()
         # Choose a dns resolver setup routine
-        if os.path.exists('/sbin/resolvconf'):
-            return LinuxResolvconfPlatform()
+        if os.path.exists('/usr/bin/resolvectl'):
+            dns_mixin = SystemdResolvedDNSMixin
+        elif os.path.exists('/sbin/resolvconf'):
+            dns_mixin = ResolvConfHelperDNSMixin
         else:
-            return LinuxManualPlatform()
+            dns_mixin = ManualFrobbingDNSMixin
+        platform.__class__ = type('_LinuxPlatform', (dns_mixin, LinuxPlatform), {})
+        return platform
     else:
         # The *BSDs aren't supported at the moment...but there's no reason they
         # can't be, when someone with such a platform tells me the syntax for
@@ -1008,8 +1023,8 @@ Cookie: MRHSession=%s\r
 
         if params.get('DNS0') and not skip_dns:
             platform.setup_dns(iface_name, serviceid,
-                               params['DNS0'].split(','),
-                               params['DNSSuffix0'].split(' '), revdns_domains, override_gateway)
+                               params['DNS0'].split(' '),
+                               params['DNSSuffix0'].split(','), revdns_domains, override_gateway)
         print("VPN link is up!")
 
     try:
