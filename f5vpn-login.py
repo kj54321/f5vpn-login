@@ -324,6 +324,7 @@ class SystemdResolvedDNSMixin:
         run_as_root(['/usr/bin/resolvectl', 'domain', iface_name, *dns_domains])
         run_as_root(['/usr/bin/resolvectl', 'default-route', iface_name, 'false'])
         run_as_root(['/usr/bin/resolvectl', 'dns', iface_name, *dns_servers])
+        run_as_root(['/usr/bin/resolvectl', 'domain', iface_name, '~.'])
 
     def teardown_dns(self):
         as_root(self._teardown_dns)
