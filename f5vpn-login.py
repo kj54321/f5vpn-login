@@ -899,7 +899,7 @@ def routespec_to_revdns(netparts, bits):
                 for n in range(start_addr, start_addr + 2 ** (remaining_bits))]
 
 
-def execPPPd(params, skip_dns=False, skip_routes=False):
+def execPPPd(params, skip_dns=False, skip_routes=False, custom_routes=False):
     tunnel_host = params['tunnel_host0']
     tunnel_port = int(params['tunnel_port0'])
 
@@ -1027,6 +1027,12 @@ Cookie: MRHSession=%s\r
                                params['DNS0'].split(' '),
                                params['DNSSuffix0'].split(','), revdns_domains, override_gateway)
         print("VPN link is up!")
+        if custom_routes:
+            from pyroute2 import IPRoute
+            ip = IPRoute()
+            ip.route("add", dst="100.64.0.0/10", gateway=local_ip, ifname=iface_name)
+            ip.route("add", dst="10.0.0.0/8", gateway=local_ip, ifname=iface_name)
+            ip.close()
 
     try:
         run_event_loop(pppd_fd, ssl_socket, ssl, logpipe_r, ppp_ip_up)
@@ -1043,7 +1049,7 @@ Cookie: MRHSession=%s\r
 
 def usage(exename, s):
     print(
-        "Usage: %s [--skip-dns] [--skip-routes] [--sessionid=sessionid] [--{http,socks5}-proxy=host:port] [[user@]host]" % exename)
+        "Usage: %s [--skip-dns] [--skip-routes] [--custom-routes] [--sessionid=sessionid] [--{http,socks5}-proxy=host:port] [[user@]host]" % exename)
 
 
 def get_prefs():
@@ -1095,7 +1101,7 @@ def main(argv):
     os.seteuid(os.getuid())
     user = getpass.getuser()
 
-    opts, args = getopt.getopt(argv[1:], "", ['http-proxy=', 'sessionid=', 'socks5-proxy=', 'skip-routes', 'skip-dns'])
+    opts, args = getopt.getopt(argv[1:], "", ['http-proxy=', 'sessionid=', 'socks5-proxy=', 'skip-routes', 'skip-dns', 'custom-routes'])
 
     if len(args) > 1:
         usage(argv[0], sys.stderr)
@@ -1140,6 +1146,8 @@ def main(argv):
             skip_routes = True
         elif opt in ('--sessionid'):
             session = val
+        elif opt in ('--custom-routes'):
+            custom_routes = True
         else:
             sys.stderr.write("Unknown option: %s\n" % opt)
             sys.exit(1)
@@ -1178,7 +1186,7 @@ def main(argv):
     print("Got plugin params, execing vpn client")
 
     try:
-        execPPPd(params, skip_dns, skip_routes)
+        execPPPd(params, skip_dns, skip_routes, custom_routes)
     except KeyboardInterrupt:
         pass
     except SystemExit as se:

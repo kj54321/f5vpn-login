@@ -42,6 +42,8 @@ sudo ./f5vpn-login.py user@host
 
 - By default, once connected, the script will route all traffic through the newly-created VPN network interface. Skip this step by passing the `--skip-routes` option (your VPN connection will be useless if this option is used, so only use it if you plan to set up the routing table yourself).
 
+- Add --custom-routes
+
 ## Other Info
 
 *user@host is saved for future invocations, so doesn't need to be
