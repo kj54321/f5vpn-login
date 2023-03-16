@@ -1030,6 +1030,7 @@ Cookie: MRHSession=%s\r
         if custom_routes:
             from pyroute2 import IPRoute
             ip = IPRoute()
+            print("Adding custom routes..")
             ip.route("add", dst="100.64.0.0/10", gateway=local_ip, ifname=iface_name)
             ip.route("add", dst="10.0.0.0/8", gateway=local_ip, ifname=iface_name)
             ip.close()
@@ -1081,6 +1082,7 @@ def main(argv):
 
     skip_dns = False
     skip_routes = False
+    custom_routes = False
 
     if '--help' in argv:
         usage(argv[0], sys.stdout)
