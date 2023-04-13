@@ -28,6 +28,11 @@ BUF_SIZE = 8192
 
 proxy_addr = None
 
+# use SSLContext for Python3.7+
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+ssl_context.check_hostname = False # ignore hostname check
+ssl_context.verify_mode = ssl.CERT_NONE # ignore cert check
+ssl_context.min_version = ssl.TLSVersion.TLSv1_2
 
 def set_non_blocking(fd):
     flags = fcntl.fcntl(fd, fcntl.F_GETFL)
@@ -415,7 +420,7 @@ def parse_hostport(host, default_port=0):
 def send_request(host, request):
     ip, port = parse_hostport(host, 443)
     s = proxy_connect(ip, port)
-    ssl_socket = wrap_socket(s)
+    ssl_socket = ssl_context.wrap_socket(s, server_hostname=host)
     ssl_socket.write(request.encode('utf-8'))
     data = ''.encode('utf-8')
     while 1:
@@ -916,7 +921,7 @@ Cookie: MRHSession=%s\r
             unwrapped_socket = proxy_connect(tunnel_host, tunnel_port)
             unwrapped_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
             unwrapped_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, struct.pack('LL', 10, 0))
-            ssl_socket = wrap_socket(unwrapped_socket)
+            ssl_socket = ssl_context.wrap_socket(unwrapped_socket, server_hostname=tunnel_host)
             ssl_socket.write(request.encode('utf-8'))
             initial_data = ssl_socket.read(1)
             break
