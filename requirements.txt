@@ -1,2 +1,5 @@
 PySocks == 1.7.1
 pyroute2 == 0.7.5
+splinter
+selenium
+stoken
