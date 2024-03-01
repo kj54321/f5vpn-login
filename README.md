@@ -36,13 +36,37 @@ If your organization does not use 2FA and you are able to log in with just your 
 sudo ./f5vpn-login.py user@host
 ```
 
+## Auto acquire MRHSession by f5-utls.py
+
+By using chrome webdriver and selenium, you can automate above steps to acuqire MRHSession.
+Required packages:
+splinter, selenium, stoken
+
+Some parameters in script that need to modify as your wish:
+- url, f5 login address 
+- username, f5 login username
+- pin, 2FA pin if applicable
+- chrome_options, your personal chrome profile(optional)
+
+Usage:
+```
+python3 f5-utils.py
+```
+
+
 ## DNS and Routing
 
 - By default, the script will change your DNS servers to the ones provided by the VPN server. Skip this step by by passing the `--skip-dns` option.
 
 - By default, once connected, the script will route all traffic through the newly-created VPN network interface. Skip this step by passing the `--skip-routes` option (your VPN connection will be useless if this option is used, so only use it if you plan to set up the routing table yourself).
 
-- Add --custom-routes
+- Add --custom-routes (Deprecated)
+On Linux System, [VPN routing is recommended under /etc/ppp/ip-up.d](https://tldp.org/HOWTO/PPP-HOWTO/x1455.html), you can write customized script when ppp tunnel established.
+
+Example: 
+```
+sudo LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libsqlite3.so.0 python3 f5vpn-login.py --sessionid 54fd617b35d8396a8eab2351857de7dc --skip-routes --custom-routes yourcompany.com:8443
+```
 
 ## Other Info
 

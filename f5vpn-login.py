@@ -11,6 +11,7 @@ import socket, re, sys, os, time, fcntl, select, errno, signal
 import getpass, getopt, types
 import string
 import ssl
+import time
 from ssl import wrap_socket
 
 try:
@@ -27,6 +28,8 @@ KEEPALIVE_TIMEOUT = 60 * 10
 BUF_SIZE = 8192
 
 proxy_addr = None
+
+current_time = int(time.time())
 
 # use SSLContext for Python3.7+
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
@@ -1118,8 +1121,9 @@ def main(argv):
     old_session = None
     session = None
     userhost = None
+    old_time = None
     if prefs is not None:
-        path, userhost, old_session = prefs.split('\0')
+        path, userhost, old_session, old_time = prefs.split('\0')
 
     if len(args) > 0:
         if args[0] != userhost:
@@ -1161,6 +1165,12 @@ def main(argv):
 
     params = None
 
+    #check timestamp validation, expire in 1800s
+    if current_time - int(old_time) >= 1 and session is None:
+        # get new session
+        print("Calling f5-utils.py...")
+        pass
+
     if session is None and old_session is not None:
         print("Trying old session...")
         menu_number = get_vpn_menu_number(host, old_session)
@@ -1189,7 +1199,7 @@ def main(argv):
         print("Couldn't get embed info. Sorry.")
         sys.exit(2)
 
-    write_prefs('\0'.join(['', userhost, session]))
+    write_prefs('\0'.join(['', userhost, session, str(current_time)]))
     print("Got plugin params, execing vpn client")
 
     try:
